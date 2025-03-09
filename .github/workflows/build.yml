@@ -103,9 +103,10 @@ jobs:
             pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
           "
         fi
-
-        
+    
     - name: Create platform-specific directory
+      shell: bash
+      if: matrix.os != 'windows-latest'
       run: |
         mkdir -p dist || sudo mkdir -p dist
         sudo chmod 777 dist
@@ -119,6 +120,15 @@ jobs:
           find dist -name "${{ matrix.binary_name }}*" -type f -exec sudo cp -f {} dist/${{ matrix.platform }}-${{ matrix.arch }}/ \;
         fi
         ls -la dist/${{ matrix.platform }}-${{ matrix.arch }}/
+
+    - name: Create platform-specific directory (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        New-Item -Path dist -ItemType Directory -Force
+        New-Item -Path dist/${{ matrix.platform }}-${{ matrix.arch }} -ItemType Directory -Force
+        Get-ChildItem -Path dist -Recurse -Filter "${{ matrix.binary_name }}*" | Copy-Item -Destination dist/${{ matrix.platform }}-${{ matrix.arch }}/ -Force
+        Get-ChildItem -Path dist/${{ matrix.platform }}-${{ matrix.arch }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
