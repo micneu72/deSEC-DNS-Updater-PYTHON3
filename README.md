@@ -41,8 +41,26 @@ The script uses a JSON configuration file with the following structure:
 
 If the configuration file doesn't exist, a template will be created automatically.
 
+## macOS Security Notice
+
+When running the binary on macOS for the first time, you may encounter a security warning as the application is from an "unidentified developer." To run the application:
+
+1. Locate the binary in Finder
+2. Right-click (or Control-click) on the binary
+3. Select "Open" from the context menu
+4. Click "Open" in the dialog that appears
+
+Alternatively, you can allow the application in System Settings:
+1. Go to System Settings > Privacy & Security
+2. Scroll down to the "Security" section
+3. Look for the message about the blocked application and click "Allow Anyway"
+4. Enter your administrator password if prompted
+
+After completing these steps, you'll be able to run the application normally.
+
 ## Requirements
 
 - Python 3.6+
 - Required packages: requests
 - At least one DNS lookup tool (drill, host, dig, or nslookup)
+
