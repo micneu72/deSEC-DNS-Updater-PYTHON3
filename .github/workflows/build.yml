@@ -12,19 +12,19 @@ jobs:
       matrix:
         include:
           # Linux (x86_64)
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: x86_64
             binary_name: desec
             
           # Linux (ARM64/aarch64) für neuere Raspberry Pi
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: aarch64
             binary_name: desec
             
           # Linux (ARM/armv7l) für ältere Raspberry Pi
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: armv7l
             binary_name: desec
@@ -58,35 +58,37 @@ jobs:
         pip install -r requirements.txt
         
     - name: Build with PyInstaller (Standard)
-      if: matrix.os != 'ubuntu-20.04' || matrix.arch == 'x86_64'
+      if: matrix.os != 'ubuntu-24.04' || matrix.arch == 'x86_64'
       run: |
         pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
         
     - name: Set up QEMU (für ARM-Builds)
-      if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
+      if: matrix.os == 'ubuntu-24.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       uses: docker/setup-qemu-action@v2
       with:
         platforms: arm64,arm
         
     - name: Build ARM binaries with Docker
-      if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
+      if: matrix.os == 'ubuntu-24.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       run: |
         # Für aarch64/arm64
         if [ "${{ matrix.arch }}" = "aarch64" ]; then
           docker run --rm -v $(pwd):/src --platform linux/arm64 python:3.10-slim bash -c "
-            apt-get update && apt-get install -y binutils &&
+            apt-get update && apt-get install -y binutils build-essential zlib1g-dev &&
             cd /src && 
             pip install --upgrade pip &&
-            pip install -r requirements.txt pyinstaller &&
+            pip install -r requirements.txt &&
+            pip install pyinstaller --no-binary pyinstaller &&
             pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
           "
         # Für armv7l/armhf
         elif [ "${{ matrix.arch }}" = "armv7l" ]; then
           docker run --rm -v $(pwd):/src --platform linux/arm/v7 python:3.10-slim bash -c "
-            apt-get update && apt-get install -y binutils &&
+            apt-get update && apt-get install -y binutils build-essential zlib1g-dev &&
             cd /src && 
             pip install --upgrade pip &&
-            pip install -r requirements.txt pyinstaller &&
+            pip install -r requirements.txt &&
+            pip install pyinstaller --no-binary pyinstaller &&
             pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
           "
         fi
@@ -94,7 +96,7 @@ jobs:
     - name: Create platform-specific directory
       run: |
         mkdir -p dist/${{ matrix.platform }}-${{ matrix.arch }}
-        if [ "${{ matrix.os }}" = "ubuntu-20.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
+        if [ "${{ matrix.os }}" = "ubuntu-24.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
           cp dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/
         else
           cp dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/
