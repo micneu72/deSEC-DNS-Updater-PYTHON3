@@ -71,28 +71,28 @@ jobs:
     - name: Build ARM binaries with Docker
       if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       run: |
-      # Für aarch64/arm64
-      if [ "${{ matrix.arch }}" = "aarch64" ]; then
-        docker run --rm -v $(pwd):/src --platform linux/arm64 python:3.10-slim bash -c "
-          apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev patchelf &&
-          cd /src && 
-          pip install --upgrade pip wheel setuptools &&
-          pip install -r requirements.txt &&
-          pip install pyinstaller==5.13.2 &&
-          pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
-        "
+        # Für aarch64/arm64
+        if [ "${{ matrix.arch }}" = "aarch64" ]; then
+          docker run --rm -v $(pwd):/src --platform linux/arm64 python:3.10-slim bash -c "
+            apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev patchelf &&
+            cd /src && 
+            pip install --upgrade pip wheel setuptools &&
+            pip install -r requirements.txt &&
+            pip install pyinstaller==5.13.2 &&
+            pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
+          "
 
-      # Für armv7l/armhf
-      elif [ "${{ matrix.arch }}" = "armv7l" ]; then
-        docker run --rm -v $(pwd):/src --platform linux/arm/v7 python:3.10-slim bash -c "
-          apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev patchelf &&
-          cd /src && 
-          pip install --upgrade pip wheel setuptools &&
-          pip install -r requirements.txt &&
-          pip install pyinstaller==5.13.2 &&
-          pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
-        "
-      fi
+        # Für armv7l/armhf
+        elif [ "${{ matrix.arch }}" = "armv7l" ]; then
+          docker run --rm -v $(pwd):/src --platform linux/arm/v7 python:3.10-slim bash -c "
+            apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev patchelf &&
+            cd /src && 
+            pip install --upgrade pip wheel setuptools &&
+            pip install -r requirements.txt &&
+            pip install pyinstaller==5.13.2 &&
+            pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
+          "
+        fi
 
         
     - name: Create platform-specific directory
