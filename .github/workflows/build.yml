@@ -45,11 +45,11 @@ jobs:
             arch: arm64
             binary_name: desec
           
-          # # Windows (x64)
-          # - os: windows-latest
-          #   platform: windows
-          #   arch: x64
-          #   binary_name: desec.exe
+          # Windows (x64)
+          - os: windows-latest
+            platform: windows
+            arch: x64
+            binary_name: desec.exe
 
     runs-on: ${{ matrix.os }}
     
@@ -111,6 +111,7 @@ jobs:
 
         
     - name: Create platform-specific directory
+      if: matrix.os != 'windows-latest'
       run: |
         mkdir -p dist || sudo mkdir -p dist
         sudo chmod 777 dist
@@ -125,37 +126,14 @@ jobs:
         fi
         ls -la dist/${{ matrix.platform }}-${{ matrix.arch }}/
 
-    # - name: Create platform-specific directory (Windows)
-    #   if: matrix.os == 'windows-latest'
-    #   shell: pwsh
-    #   run: |
-    #     New-Item -Path dist -ItemType Directory -Force
-    #     New-Item -Path dist/${{ matrix.platform }}-${{ matrix.arch }} -ItemType Directory -Force
-        
-    #     # Finde alle Dateien, die dem Muster entsprechen, aber nur in dist\ (nicht rekursiv)
-    #     $files = Get-ChildItem -Path dist -Filter "${{ matrix.binary_name }}*" -File
-        
-    #     # Kopiere gefundene Dateien ins Zielverzeichnis
-    #     if ($files) {
-    #       foreach ($file in $files) {
-    #         Copy-Item -Path $file.FullName -Destination dist/${{ matrix.platform }}-${{ matrix.arch }}/ -Force
-    #       }
-    #     } else {
-    #       # Suche rekursiv, wenn keine Dateien direkt in dist\ gefunden wurden
-    #       $files = Get-ChildItem -Path dist -Recurse -Filter "${{ matrix.binary_name }}*" -File | 
-    #                Where-Object { $_.DirectoryName -ne (Resolve-Path "dist/${{ matrix.platform }}-${{ matrix.arch }}").Path }
-          
-    #       if ($files) {
-    #         foreach ($file in $files) {
-    #           Copy-Item -Path $file.FullName -Destination dist/${{ matrix.platform }}-${{ matrix.arch }}/ -Force
-    #         }
-    #       } else {
-    #         Write-Host "No binary files found matching pattern '${{ matrix.binary_name }}*'"
-    #       }
-    #     }
-        
-    #     Get-ChildItem -Path dist/${{ matrix.platform }}-${{ matrix.arch }}
-
+    - name: Create platform-specific directory (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        New-Item -Path dist -ItemType Directory -Force
+        New-Item -Path dist/${{ matrix.platform }}-${{ matrix.arch }} -ItemType Directory -Force
+        Copy-Item -Path dist\${{ matrix.binary_name }} -Destination dist\${{ matrix.platform }}-${{ matrix.arch }}\ -Force -ErrorAction SilentlyContinue
+        Get-ChildItem -Path dist\${{ matrix.platform }}-${{ matrix.arch }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
