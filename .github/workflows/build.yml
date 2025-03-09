@@ -103,10 +103,14 @@ jobs:
             pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
           "
         fi
-    
+
+    - name: Build with PyInstaller (Standard)
+      if: matrix.os == 'windows-latest' || matrix.os != 'ubuntu-20.04' || matrix.arch == 'x86_64'
+      run: |
+        pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
+
+        
     - name: Create platform-specific directory
-      shell: bash
-      if: matrix.os != 'windows-latest'
       run: |
         mkdir -p dist || sudo mkdir -p dist
         sudo chmod 777 dist
@@ -127,8 +131,31 @@ jobs:
       run: |
         New-Item -Path dist -ItemType Directory -Force
         New-Item -Path dist/${{ matrix.platform }}-${{ matrix.arch }} -ItemType Directory -Force
-        Get-ChildItem -Path dist -Recurse -Filter "${{ matrix.binary_name }}*" | Copy-Item -Destination dist/${{ matrix.platform }}-${{ matrix.arch }}/ -Force
+        
+        # Finde alle Dateien, die dem Muster entsprechen, aber nur in dist\ (nicht rekursiv)
+        $files = Get-ChildItem -Path dist -Filter "${{ matrix.binary_name }}*" -File
+        
+        # Kopiere gefundene Dateien ins Zielverzeichnis
+        if ($files) {
+          foreach ($file in $files) {
+            Copy-Item -Path $file.FullName -Destination dist/${{ matrix.platform }}-${{ matrix.arch }}/ -Force
+          }
+        } else {
+          # Suche rekursiv, wenn keine Dateien direkt in dist\ gefunden wurden
+          $files = Get-ChildItem -Path dist -Recurse -Filter "${{ matrix.binary_name }}*" -File | 
+                   Where-Object { $_.DirectoryName -ne (Resolve-Path "dist/${{ matrix.platform }}-${{ matrix.arch }}").Path }
+          
+          if ($files) {
+            foreach ($file in $files) {
+              Copy-Item -Path $file.FullName -Destination dist/${{ matrix.platform }}-${{ matrix.arch }}/ -Force
+            }
+          } else {
+            Write-Host "No binary files found matching pattern '${{ matrix.binary_name }}*'"
+          }
+        }
+        
         Get-ChildItem -Path dist/${{ matrix.platform }}-${{ matrix.arch }}
+
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
