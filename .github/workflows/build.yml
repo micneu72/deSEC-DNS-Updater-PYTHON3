@@ -67,10 +67,14 @@ jobs:
         pip install pyinstaller
         pip install -r requirements.txt
         
-    - name: Build with PyInstaller (Standard)
-      if: matrix.os == 'windows-latest' || matrix.os != 'ubuntu-24.04' || matrix.arch == 'x86_64'
+    - name: Build with PyInstaller (macOS)
+      if: matrix.os == 'macos-latest'
       run: |
-        pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
+        if [ "${{ matrix.arch }}" = "x86_64" ]; then
+          pyinstaller --onefile --clean --target-architecture x86_64 --name ${{ matrix.binary_name }} desec.py
+        elif [ "${{ matrix.arch }}" = "arm64" ]; then
+          pyinstaller --onefile --clean --target-architecture arm64 --name ${{ matrix.binary_name }} desec.py
+        fi
 
     - name: Set up QEMU (für ARM-Builds)
       if: matrix.os == 'ubuntu-24.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
