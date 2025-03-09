@@ -124,7 +124,7 @@ jobs:
 
         
     - name: Create platform-specific directory
-      if: matrix.os != 'windows-latest'
+      if: matrix.os != 'windows-latest' || != 'macos-latest'
       run: |
         mkdir -p dist || sudo mkdir -p dist
         sudo chmod 777 dist
@@ -137,6 +137,16 @@ jobs:
           sudo cp -f dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/ || echo "Binary not found, checking subdirectories..."
           find dist -name "${{ matrix.binary_name }}*" -type f -exec sudo cp -f {} dist/${{ matrix.platform }}-${{ matrix.arch }}/ \;
         fi
+        ls -la dist/${{ matrix.platform }}-${{ matrix.arch }}/
+
+    - name: Create platform-specific directory (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        mkdir -p dist || sudo mkdir -p dist
+        sudo chmod 777 dist
+        mkdir -p dist/${{ matrix.platform }}-${{ matrix.arch }}
+        sudo cp -f dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/ || echo "Binary not found, checking subdirectories..."
+        find dist -name "${{ matrix.binary_name }}*" -type f -exec sudo cp -f {} dist/${{ matrix.platform }}-${{ matrix.arch }}/ \;
         ls -la dist/${{ matrix.platform }}-${{ matrix.arch }}/
 
     - name: Create platform-specific directory (Windows)
