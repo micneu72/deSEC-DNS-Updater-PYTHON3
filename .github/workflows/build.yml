@@ -76,6 +76,7 @@ jobs:
           docker run --rm -v $(pwd):/src --platform linux/arm64 python:3.10-slim bash -c "
             apt-get update && apt-get install -y binutils &&
             cd /src && 
+            pip install --upgrade pip &&
             pip install -r requirements.txt pyinstaller &&
             pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
           "
@@ -84,6 +85,7 @@ jobs:
           docker run --rm -v $(pwd):/src --platform linux/arm/v7 python:3.10-slim bash -c "
             apt-get update && apt-get install -y binutils &&
             cd /src && 
+            pip install --upgrade pip &&
             pip install -r requirements.txt pyinstaller &&
             pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
           "
