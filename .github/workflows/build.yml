@@ -12,19 +12,19 @@ jobs:
       matrix:
         include:
           # Linux (x86_64)
-          - os: ubuntu-24.04
+          - os: ubuntu-20.04
             platform: linux
             arch: x86_64
             binary_name: desec
             
           # Linux (ARM64/aarch64) für neuere Raspberry Pi
-          - os: ubuntu-24.04
+          - os: ubuntu-20.04
             platform: linux
             arch: aarch64
             binary_name: desec
             
           # Linux (ARM/armv7l) für ältere Raspberry Pi
-          - os: ubuntu-24.04
+          - os: ubuntu-20.04
             platform: linux
             arch: armv7l
             binary_name: desec
@@ -58,7 +58,7 @@ jobs:
         pip install -r requirements.txt
         
     - name: Build with PyInstaller (Standard)
-      if: matrix.os != 'ubuntu-24.04' || matrix.arch == 'x86_64'
+      if: matrix.os != 'ubuntu-20.04' || matrix.arch == 'x86_64'
       run: |
         pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
         
