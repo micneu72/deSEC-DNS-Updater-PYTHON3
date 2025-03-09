@@ -3,7 +3,7 @@
 ----------------------------------------------------------------------------
     Script Name:     desec.py
     CreationDate:    08.03.2025
-    Last Modified:   09.03.2025 12:08:01
+    Last Modified:   09.03.2025 12:30:50
     Copyright:       Michael N. (c)2025
     Purpose:         Aktualisiert DNS-Einträge bei desec.io mit Pushover-Benachrichtigungen
 ----------------------------------------------------------------------------
@@ -23,33 +23,33 @@ from datetime import datetime
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='Aktualisiere DNS-Einträge bei desec.io')
+    parser = argparse.ArgumentParser(description='Update DNS entries at desec.io')
     parser.add_argument('-c', '--config', default='./desec.json',
-                        help='Pfad zur Konfigurationsdatei (Standard: ./desec.json)')
+                        help='Path to configuration file (default: ./desec.json)')
     parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Ausführliche Ausgabe aktivieren')
+                        help='Enable verbose output')
     return parser.parse_args()
 
 
 def create_default_config(config_file: str) -> None:
     """Create a default configuration file if it doesn't exist."""
     default_config = {
-        "token": "dein_desec_token_hier_eintragen",
-        "kodihost": "deine.domain.hier.eintragen",
+        "token": "enter_your_desec_token_here",
+        "kodihost": "enter.your.domain.here",
         "pushover": {
             "enabled": False,
-            "user_key": "dein_pushover_user_key",
-            "app_token": "dein_pushover_app_token"
+            "user_key": "your_pushover_user_key",
+            "app_token": "your_pushover_app_token"
         }
     }
     
     try:
         with open(config_file, 'w') as f:
             json.dump(default_config, f, indent=4)
-        print(f"Template-Datei {config_file} wurde erstellt. "
-              f"Bitte passe die Werte an und starte das Skript erneut.")
+        print(f"Template file {config_file} has been created. "
+              f"Please adjust the values and restart the script.")
     except Exception as e:
-        print(f"Fehler beim Erstellen der Template-Datei: {e}")
+        print(f"Error creating template file: {e}")
         sys.exit(1)
 
 
@@ -57,56 +57,56 @@ def load_config(config_file: str) -> Dict[str, Any]:
     """Load configuration from a JSON file."""
     try:
         if not os.path.exists(config_file):
-            print(f"Konfigurationsdatei {config_file} nicht gefunden! Erstelle Template-Datei...")
+            print(f"Configuration file {config_file} not found! Creating template file...")
             create_default_config(config_file)
             sys.exit(0)
             
         with open(config_file, 'r') as f:
             config = json.load(f)
             
-        # Überprüfen, ob die Werte erfolgreich eingelesen wurden
-        if not config.get("token") or config["token"] == "dein_desec_token_hier_eintragen":
-            print("Fehler: Token konnte nicht aus der Konfigurationsdatei gelesen werden oder wurde nicht angepasst.")
+        # Check if values were successfully loaded
+        if not config.get("token") or config["token"] == "enter_your_desec_token_here":
+            print("Error: Token could not be read from the configuration file or has not been customized.")
             sys.exit(1)
             
-        if not config.get("kodihost") or config["kodihost"] == "deine.domain.hier.eintragen":
-            print("Fehler: Domain konnte nicht aus der Konfigurationsdatei gelesen werden oder wurde nicht angepasst.")
+        if not config.get("kodihost") or config["kodihost"] == "enter.your.domain.here":
+            print("Error: Domain could not be read from the configuration file or has not been customized.")
             sys.exit(1)
             
-        # Stellen Sie sicher, dass Pushover-Konfiguration existiert, auch wenn sie nicht aktiviert ist
+        # Ensure Pushover configuration exists, even if not enabled
         if "pushover" not in config:
             config["pushover"] = {"enabled": False}
             
         return config
     except Exception as e:
-        print(f"Fehler beim Laden der Konfigurationsdatei: {e}")
+        print(f"Error loading configuration file: {e}")
         sys.exit(1)
 
 
 def send_pushover_notification(config: Dict[str, Any], title: str, message: str, priority: int = 0) -> bool:
     """
-    Sendet eine Pushover-Benachrichtigung, wenn die Konfiguration vorhanden ist.
+    Sends a Pushover notification if the configuration is available.
     
     Args:
-        config: Die Konfiguration mit Pushover-Einstellungen
-        title: Titel der Benachrichtigung
-        message: Nachrichtentext
-        priority: Priorität (-2 bis 2, Standard: 0)
+        config: The configuration with Pushover settings
+        title: Notification title
+        message: Notification text
+        priority: Priority (-2 to 2, default: 0)
         
     Returns:
-        bool: True wenn die Benachrichtigung gesendet wurde, sonst False
+        bool: True if the notification was sent, otherwise False
     """
-    # Prüfen, ob Pushover konfiguriert und aktiviert ist
+    # Check if Pushover is configured and enabled
     if not config.get("pushover", {}).get("enabled", False):
         return False
     
     pushover_config = config["pushover"]
     
-    # Prüfen, ob die erforderlichen Schlüssel vorhanden sind
+    # Check if the required keys are present
     if not pushover_config.get("user_key") or not pushover_config.get("app_token"):
         return False
     
-    # Pushover-API-Anfrage senden
+    # Send Pushover API request
     try:
         response = requests.post(
             "https://api.pushover.net/1/messages.json",
