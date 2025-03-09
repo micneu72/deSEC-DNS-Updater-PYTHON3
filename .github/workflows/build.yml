@@ -44,6 +44,12 @@ jobs:
             platform: macos
             arch: arm64
             binary_name: desec
+          
+          # Windows (x64)
+          - os: windows-latest
+            platform: windows
+            arch: x64
+            binary_name: desec.exe            
 
     runs-on: ${{ matrix.os }}
     
@@ -62,10 +68,10 @@ jobs:
         pip install -r requirements.txt
         
     - name: Build with PyInstaller (Standard)
-      if: matrix.os != 'ubuntu-20.04' || matrix.arch == 'x86_64'
+      if: matrix.os == 'windows-latest' || matrix.os != 'ubuntu-20.04' || matrix.arch == 'x86_64'
       run: |
         pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
-        
+
     - name: Set up QEMU (für ARM-Builds)
       if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       uses: docker/setup-qemu-action@v2
