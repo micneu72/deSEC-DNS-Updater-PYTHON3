@@ -122,8 +122,16 @@ jobs:
           
       - name: Create release ZIP
         run: |
+          mkdir -p binaries
           cd binaries
-          zip -r ../desec-binaries.zip *
+          if [ "$(ls -A)" ]; then
+            zip -r ../desec-binaries.zip *
+          else
+            echo "No artifacts found, creating empty ZIP file"
+            touch empty.txt
+            zip -r ../desec-binaries.zip empty.txt
+          fi
+
           
       - name: Upload combined artifact
         uses: actions/upload-artifact@v4
