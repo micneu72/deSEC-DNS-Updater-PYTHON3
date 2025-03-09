@@ -124,7 +124,7 @@ jobs:
 
         
     - name: Create platform-specific directory
-      if: matrix.os != 'windows-latest' || != 'macos-latest'
+      if: matrix.os != 'windows-latest' || matrix.os != 'macos-latest'
       run: |
         mkdir -p dist || sudo mkdir -p dist
         sudo chmod 777 dist
