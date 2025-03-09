@@ -3,7 +3,7 @@
 ----------------------------------------------------------------------------
     Script Name:     desec.py
     CreationDate:    08.03.2025
-    Last Modified:   09.03.2025 00:35:14
+    Last Modified:   09.03.2025 12:08:01
     Copyright:       Michael N. (c)2025
     Purpose:         Aktualisiert DNS-Einträge bei desec.io mit Pushover-Benachrichtigungen
 ----------------------------------------------------------------------------
@@ -124,12 +124,11 @@ def send_pushover_notification(config: Dict[str, Any], title: str, message: str,
         if response.status_code == 200:
             return True
         else:
-            print(f"Fehler beim Senden der Pushover-Benachrichtigung: {response.text}")
+            print(f"Error sending Pushover notification: {response.text}")
             return False
     except Exception as e:
-        print(f"Fehler beim Senden der Pushover-Benachrichtigung: {e}")
+        print(f"Error sending Pushover notification: {e}")
         return False
-
 
 def check_ip_address(ip: str) -> Tuple[bool, str]:
     """
@@ -192,10 +191,10 @@ def hostname_to_ip(hostname: str, verbose: bool = False) -> Tuple[str, str]:
                 continue
         
         if verbose:
-            print(f"Verwende {used_method} zur DNS-Auflösung")
+            print(f"Using {used_method} for DNS resolution")
         
         if not results:
-            print("Fehler: Keine DNS-Lookup-Tools verfügbar (drill, host, dig, nslookup).")
+            print("Error: No DNS lookup tools available (drill, host, dig, nslookup).")
             return "", ""
         
         # IP-Adressen aus den Ergebnissen extrahieren
@@ -215,34 +214,39 @@ def hostname_to_ip(hostname: str, verbose: bool = False) -> Tuple[str, str]:
         return ipv4_list, ipv6_list
     
     except Exception as e:
-        print(f"Fehler bei der Auflösung des Hostnamens: {e}")
+        print(f"Error resolving hostname: {e}")
         return "", ""
 
 
 def format_runtime(elapsed_time: int) -> str:
     """
-    Formatiert die übergebene Laufzeit (in Sekunden) dynamisch.
-    
+    Formats the given runtime (in seconds) dynamically.Args:
+        elapsed_time: Time in seconds to format
+        
     Returns:
-        str: Formatierte Laufzeit
+        str: Formatted runtime string
     """
+    time_units = [
+        (86400, "day", "days"),
+        (3600, "hour", "hours"),
+        (60, "minute", "minutes"),
+        (1, "second", "seconds")
+    ]
+
     if elapsed_time < 60:
-        return f"Laufzeit: {elapsed_time} Sekunden"
-    elif elapsed_time < 3600:
-        minutes = elapsed_time // 60
-        seconds = elapsed_time % 60
-        return f"Laufzeit: {minutes} Minuten, {seconds} Sekunden"
-    elif elapsed_time < 86400:
-        hours = elapsed_time // 3600
-        minutes = (elapsed_time % 3600) // 60
-        seconds = elapsed_time % 60
-        return f"Laufzeit: {hours} Stunden, {minutes} Minuten, {seconds} Sekunden"
-    else:
-        days = elapsed_time // 86400
-        hours = (elapsed_time % 86400) // 3600
-        minutes = (elapsed_time % 3600) // 60
-        seconds = elapsed_time % 60
-        return f"Laufzeit: {days} Tage, {hours} Stunden, {minutes} Minuten, {seconds} Sekunden"
+        return f"Runtime: {elapsed_time} seconds"
+
+    parts = []
+    remaining = elapsed_time
+
+    for seconds, singular, plural in time_units:
+        if remaining >= seconds:
+            value = remaining // seconds
+            remaining %= seconds
+            unit = singular if value == 1 else plural
+            parts.append(f"{value} {unit}")
+
+    return f"Runtime: {', '.join(parts)}"
 
 
 def update_dns(config: Dict[str, Any], ipv4: str, ipv6: str, current_ipv4: str, current_ipv6: str, verbose: bool = False) -> bool:
@@ -265,7 +269,7 @@ def update_dns(config: Dict[str, Any], ipv4: str, ipv6: str, current_ipv4: str, 
     ip_changed = current_ipv4 != ipv4 or current_ipv6 != ipv6
     
     if ip_changed:
-        print("Die IPs haben sich geändert oder eine davon. Verarbeitung starten.")
+        print("The IPs have changed or one of them. Starting processing.")
         
         # Nachricht für Pushover vorbereiten
         change_details = []
@@ -280,49 +284,50 @@ def update_dns(config: Dict[str, Any], ipv4: str, ipv6: str, current_ipv4: str, 
         headers = {"Authorization": f"Token {token}"}
         
         if ipv4 and ipv6:
-            print(f"Beide IPs sind verfügbar: IPv4 = '{ipv4}', IPv6 = '{ipv6}'")
+            print(f"Both IPs are available: IPv4 = '{ipv4}', IPv6 = '{ipv6}'")
             params = {"hostname": kodihost, "myipv4": ipv4, "myipv6": ipv6}
         elif ipv4:
-            print(f"Nur IPv4 ist verfügbar: IPv4 = '{ipv4}'")
+            print(f"Only IPv4 is available: IPv4 = '{ipv4}'")
             params = {"hostname": kodihost, "myipv4": ipv4, "myipv6": "no"}
         elif ipv6:
-            print(f"Nur IPv6 ist verfügbar: IPv6 = '{ipv6}'")
+            print(f"Only IPv6 is available: IPv6 = '{ipv6}'")
             params = {"hostname": kodihost, "myipv4": "no", "myipv6": ipv6}
         else:
-            print("Keine der beiden IPs ist verfügbar")
+            print("None of the IPs are available")
             return False
+
         
         try:
             response = requests.get(url, headers=headers, params=params)
             
             if verbose:
-                print(f"Update-Antwort: {response.text}")
+                print(f"Update response: {response.text}")
             else:
-                print(f"Update-Status: {response.status_code}")
+                print(f"Update status: {response.status_code}")
             
             # Pushover-Benachrichtigung senden
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            notification_title = f"DNS-Update für {kodihost}"
-            notification_message = f"IP-Änderung am {current_time}:\n{change_message}\n\nUpdate-Status: {response.status_code}"
+            notification_title = f"DNS Update for {kodihost}"
+            notification_message = f"IP change on {current_time}:\n{change_message}\n\nUpdate status: {response.status_code}"
             
             send_pushover_notification(config, notification_title, notification_message)
             
             return True
         except Exception as e:
-            error_message = f"Fehler beim Aktualisieren der DNS-Einträge: {e}"
+            error_message = f"Error updating DNS entries: {e}"
             print(error_message)
             
             # Fehler auch per Pushover melden
             send_pushover_notification(
                 config, 
-                f"DNS-Update Fehler für {kodihost}", 
+                f"DNS-Update Error for {kodihost}", 
                 error_message,
                 priority=1
             )
             
             return False
     else:
-        print("Die IPs haben sich nicht geändert. Keine Aktion erforderlich.")
+        print("The IPs have not changed. No action required.")
         return False
 
 
@@ -347,7 +352,7 @@ def get_current_ips(verbose: bool = False) -> Tuple[str, str]:
     for service in ip_services:
         try:
             if verbose:
-                print(f"Versuche IPv4-Adresse von {service['url']} abzurufen...")
+                print(f"Attempting to retrieve IPv4 address from {service['url']}...")
                 
             response = requests.get(service["url"], params=service["ipv4_params"], timeout=5)
             if response.status_code == 200:
@@ -359,13 +364,13 @@ def get_current_ips(verbose: bool = False) -> Tuple[str, str]:
                     break
         except Exception as e:
             if verbose:
-                print(f"Fehler beim Abrufen der IPv4-Adresse von {service['url']}: {e}")
+                print(f"Error retrieving IPv4 address from {service['url']}: {e}")
     
     # IPv6 abrufen
     for service in ip_services:
         try:
             if verbose:
-                print(f"Versuche IPv6-Adresse von {service['url']} abzurufen...")
+                print(f"Attempting to retrieve IPv6 address from {service['url']}...")
                 
             # Für IPv6 spezifische Parameter verwenden
             response = requests.get(service["url"], params=service["ipv6_params"], timeout=5)
@@ -378,7 +383,7 @@ def get_current_ips(verbose: bool = False) -> Tuple[str, str]:
                     break
         except Exception as e:
             if verbose:
-                print(f"Fehler beim Abrufen der IPv6-Adresse von {service['url']}: {e}")
+                print(f"Error retrieving IPv6 address from {service['url']}: {e}")
     
     return ipv4, ipv6
 
