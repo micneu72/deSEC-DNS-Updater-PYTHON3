@@ -130,14 +130,18 @@ jobs:
         with:
           path: binaries
           
-- name: Create Release
-  uses: softprops/action-gh-release@v1
-  with:
-    files: desec-binaries.zip
-    draft: false
-    prerelease: false
-  env:
-    GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - name: Create release ZIP
+        run: |
+          mkdir -p binaries
+          cd binaries
+          if [ "$(ls -A)" ]; then
+            zip -r ../desec-binaries.zip *
+          else
+            echo "No artifacts found, creating empty ZIP file"
+            touch empty.txt
+            zip -r ../desec-binaries.zip empty.txt
+          fi
+
           
       - name: Upload combined artifact
         uses: actions/upload-artifact@v4
