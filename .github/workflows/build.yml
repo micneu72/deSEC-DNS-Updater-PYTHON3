@@ -162,6 +162,6 @@ jobs:
           files: desec-binaries.zip
           draft: false
           prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           fail_on_unmatched_files: false
 
