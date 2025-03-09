@@ -41,6 +41,14 @@ The script uses a JSON configuration file with the following structure:
 
 If the configuration file doesn't exist, a template will be created automatically.
 
+## Compatibility Notes
+
+- The Linux binaries were tested on Ubuntu 24.04 and Kali Linux Rolling
+- Linux binaries may require GLIBC 2.38 or newer
+- If you're using an older Linux distribution (like Debian Bullseye), you may need to compile the binary yourself or use the Python script directly
+- macOS binaries were tested on macOS 15.3.1 (Sequoia)
+- For best compatibility across different Linux distributions, consider using the Python script instead of the pre-compiled binaries
+
 ## macOS Security Notice
 
 When running the binary on macOS for the first time, you may encounter a security warning as the application is from an "unidentified developer." To run the application:
@@ -63,4 +71,3 @@ After completing these steps, you'll be able to run the application normally.
 - Python 3.6+
 - Required packages: requests
 - At least one DNS lookup tool (drill, host, dig, or nslookup)
-
