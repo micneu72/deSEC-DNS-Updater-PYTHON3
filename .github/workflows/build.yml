@@ -97,19 +97,19 @@ jobs:
         
     - name: Create platform-specific directory
       run: |
+        mkdir -p dist || sudo mkdir -p dist
+        sudo chmod 777 dist
         mkdir -p dist/${{ matrix.platform }}-${{ matrix.arch }}
         if [ "${{ matrix.os }}" = "ubuntu-20.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
-            cp dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/
+          ls -la dist/
+          sudo cp -f dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/ || echo "Binary not found, checking subdirectories..."
+          find dist -name "${{ matrix.binary_name }}" -type f -exec sudo cp -f {} dist/${{ matrix.platform }}-${{ matrix.arch }}/ \;
         else
-            cp dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/
+          sudo cp -f dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/ || echo "Binary not found, checking subdirectories..."
+          find dist -name "${{ matrix.binary_name }}*" -type f -exec sudo cp -f {} dist/${{ matrix.platform }}-${{ matrix.arch }}/ \;
         fi
-        
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ matrix.platform }}-${{ matrix.arch }}
-        path: dist/${{ matrix.platform }}-${{ matrix.arch }}
-        
+        ls -la dist/${{ matrix.platform }}-${{ matrix.arch }}/
+
   # Job zum Zusammenfassen aller Binaries in einem Zip-Archiv
   package:
     needs: build
