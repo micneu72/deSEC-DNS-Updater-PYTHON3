@@ -1,6 +1,10 @@
 name: Build Binaries
 
 on:
+  permissions:
+  contents: write
+  packages: write
+  
   push:
     tags:
       - 'v*'  # Wird ausgelöst, wenn ein Tag mit 'v' beginnt (z.B. v1.0.0)
