@@ -16,19 +16,19 @@ jobs:
       matrix:
         include:
           # Linux (x86_64)
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: x86_64
             binary_name: desec
             
           # Linux (ARM64/aarch64) für neuere Raspberry Pi
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: aarch64
             binary_name: desec
             
           # Linux (ARM/armv7l) für ältere Raspberry Pi
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: armv7l
             binary_name: desec
@@ -68,18 +68,18 @@ jobs:
         pip install -r requirements.txt
         
     - name: Build with PyInstaller (Standard)
-      if: matrix.os == 'windows-latest' || matrix.os != 'ubuntu-20.04' || matrix.arch == 'x86_64'
+      if: matrix.os == 'windows-latest' || matrix.os != 'ubuntu-24.04' || matrix.arch == 'x86_64'
       run: |
         pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
 
     - name: Set up QEMU (für ARM-Builds)
-      if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
+      if: matrix.os == 'ubuntu-24.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       uses: docker/setup-qemu-action@v2
       with:
         platforms: arm64,arm
         
     - name: Build ARM binaries with Docker
-      if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
+      if: matrix.os == 'ubuntu-24.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       run: |
         # Für aarch64/arm64
         if [ "${{ matrix.arch }}" = "aarch64" ]; then
@@ -105,7 +105,7 @@ jobs:
         fi
 
     - name: Build with PyInstaller (Standard)
-      if: matrix.os == 'windows-latest' || matrix.os != 'ubuntu-20.04' || matrix.arch == 'x86_64'
+      if: matrix.os == 'windows-latest' || matrix.os != 'ubuntu-24.04' || matrix.arch == 'x86_64'
       run: |
         pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
 
@@ -116,7 +116,7 @@ jobs:
         mkdir -p dist || sudo mkdir -p dist
         sudo chmod 777 dist
         mkdir -p dist/${{ matrix.platform }}-${{ matrix.arch }}
-        if [ "${{ matrix.os }}" = "ubuntu-20.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
+        if [ "${{ matrix.os }}" = "ubuntu-24.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
           ls -la dist/
           sudo cp -f dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/ || echo "Binary not found, checking subdirectories..."
           find dist -name "${{ matrix.binary_name }}" -type f -exec sudo cp -f {} dist/${{ matrix.platform }}-${{ matrix.arch }}/ \;
