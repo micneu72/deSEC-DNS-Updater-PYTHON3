@@ -70,10 +70,14 @@ jobs:
     - name: Build with PyInstaller (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        if [ "${{ matrix.arch }}" = "x86_64" ]; then
+        echo "Building for architecture: ${{ matrix.arch }}"
+        if [[ "${{ matrix.arch }}" == "x86_64" ]]; then
           pyinstaller --onefile --clean --target-architecture x86_64 --name ${{ matrix.binary_name }} desec.py
-        elif [ "${{ matrix.arch }}" = "arm64" ]; then
+        elif [[ "${{ matrix.arch }}" == "arm64" ]]; then
           pyinstaller --onefile --clean --target-architecture arm64 --name ${{ matrix.binary_name }} desec.py
+        else
+          echo "Unknown architecture: ${{ matrix.arch }}"
+          exit 1
         fi
 
     - name: Set up QEMU (für ARM-Builds)
