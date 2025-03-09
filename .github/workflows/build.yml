@@ -63,44 +63,47 @@ jobs:
         pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
         
     - name: Set up QEMU (für ARM-Builds)
-      if: matrix.os == 'ubuntu-24.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
+      if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       uses: docker/setup-qemu-action@v2
       with:
         platforms: arm64,arm
         
     - name: Build ARM binaries with Docker
-      if: matrix.os == 'ubuntu-24.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
+      if: matrix.os == 'ubuntu-20.04' && (matrix.arch == 'aarch64' || matrix.arch == 'armv7l')
       run: |
         # Für aarch64/arm64
         if [ "${{ matrix.arch }}" = "aarch64" ]; then
           docker run --rm -v $(pwd):/src --platform linux/arm64 python:3.10-slim bash -c "
-            apt-get update && apt-get install -y binutils build-essential zlib1g-dev &&
+            apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev &&
             cd /src && 
-            pip install --upgrade pip &&
+            pip install --upgrade pip wheel setuptools &&
             pip install -r requirements.txt &&
-            pip install pyinstaller --no-binary pyinstaller &&
-            pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
+            PYTHONPATH=/src pip install pyinstaller &&
+            PYTHONPATH=/src pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
           "
+
         # Für armv7l/armhf
         elif [ "${{ matrix.arch }}" = "armv7l" ]; then
           docker run --rm -v $(pwd):/src --platform linux/arm/v7 python:3.10-slim bash -c "
-            apt-get update && apt-get install -y binutils build-essential zlib1g-dev &&
+            apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev &&
             cd /src && 
-            pip install --upgrade pip &&
+            pip install --upgrade pip wheel setuptools &&
             pip install -r requirements.txt &&
-            pip install pyinstaller --no-binary pyinstaller &&
-            pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
+            PYTHONPATH=/src pip install pyinstaller &&
+            PYTHONPATH=/src pyinstaller --onefile --name ${{ matrix.binary_name }} desec.py
           "
+
         fi
         
     - name: Create platform-specific directory
       run: |
-        mkdir -p dist/${{ matrix.platform }}-${{ matrix.arch }}
-        if [ "${{ matrix.os }}" = "ubuntu-24.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
-          cp dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/
+        sudo mkdir -p dist/${{ matrix.platform }}-${{ matrix.arch }}
+        if [ "${{ matrix.os }}" = "ubuntu-20.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
+            sudo cp dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/
         else
-          cp dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/
+            sudo cp dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/
         fi
+
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
