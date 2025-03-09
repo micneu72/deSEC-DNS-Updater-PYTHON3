@@ -86,10 +86,13 @@ jobs:
           docker run --rm -v $(pwd):/src --platform linux/arm64 python:3.10-slim bash -c "
             apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev patchelf &&
             cd /src && 
-            pip install --upgrade pip wheel setuptools &&
-            pip install -r requirements.txt &&
-            pip install pyinstaller==5.13.2 &&
-            pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
+            sudo apt install python3-venv python3-full
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install pyinstaller
+            pip install -r requirements.txt
+            pyinstaller --onefile --clean --name ${{ matrix.binary_name }} desec.py
+            deactivate
           "
 
         # Für armv7l/armhf
@@ -97,10 +100,12 @@ jobs:
           docker run --rm -v $(pwd):/src --platform linux/arm/v7 python:3.10-slim bash -c "
             apt-get update && apt-get install -y binutils build-essential zlib1g-dev libmagic-dev patchelf &&
             cd /src && 
-            pip install --upgrade pip wheel setuptools &&
-            pip install -r requirements.txt &&
-            pip install pyinstaller==5.13.2 &&
-            pyinstaller --onefile --name ${{ matrix.binary_name }} --clean --log-level DEBUG desec.py
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install pyinstaller
+            pip install -r requirements.txt
+            pyinstaller --onefile --clean --name ${{ matrix.binary_name }} desec.py
+            deactivate
           "
         fi
 
