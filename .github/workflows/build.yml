@@ -97,15 +97,12 @@ jobs:
         
     - name: Create platform-specific directory
       run: |
-        mkdir -p dist || sudo mkdir -p dist
-        sudo chmod 777 dist
         mkdir -p dist/${{ matrix.platform }}-${{ matrix.arch }}
-        if [ "${{ matrix.os }}" = "ubuntu-20.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
-            cp dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/
+        if [ "${{ matrix.os }}" = "ubuntu-24.04" ] && [ "${{ matrix.arch }}" != "x86_64" ]; then
+          cp dist/${{ matrix.binary_name }} dist/${{ matrix.platform }}-${{ matrix.arch }}/
         else
-            cp dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/
+          cp dist/${{ matrix.binary_name }}* dist/${{ matrix.platform }}-${{ matrix.arch }}/
         fi
-
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
