@@ -1,5 +1,6 @@
+Hier ist die angepasste README.md mit den Änderungen für macOS launchd:
+
 # deSEC-DNS-Updater-PYTHON3
-# desec.py
 
 A Python script to automatically update DNS entries at desec.io with Pushover notifications.
 
@@ -103,7 +104,7 @@ systemctl list-timers --all
 
 For automated execution on macOS, you can use launchd:
 
-1. Create a plist file at `~/Library/LaunchAgents/com.user.desec-updater.plist`:
+1. Create a plist file at `/Library/LaunchDaemons/com.micneu.desec-updater.plist` (for system-wide execution) or `~/Library/LaunchAgents/com.micneu.desec-updater.plist` (for user-specific execution):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -114,7 +115,9 @@ For automated execution on macOS, you can use launchd:
     <string>com.micneu.desec-updater</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/path/to/your/desec</string>
+        <string>/usr/local/bin/desec</string>
+        <string>-c</string>
+        <string>/usr/local/etc/desec.json</string>
     </array>
     <key>StartInterval</key>
     <integer>900</integer>
@@ -130,14 +133,32 @@ For automated execution on macOS, you can use launchd:
 
 2. Load and start the job:
 
+For system-wide execution (LaunchDaemons):
 ```bash
-launchctl load ~/Library/LaunchAgents/com.user.desec-updater.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.micneu.desec-updater.plist
+```
+
+For user-specific execution (LaunchAgents):
+```bash
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.micneu.desec-updater.plist
 ```
 
 3. To check if it's running:
 
 ```bash
 launchctl list | grep desec
+```
+
+4. To stop and unload the job:
+
+For system-wide execution:
+```bash
+sudo launchctl bootout system /Library/LaunchDaemons/com.micneu.desec-updater.plist
+```
+
+For user-specific execution:
+```bash
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.micneu.desec-updater.plist
 ```
 
 ## Compatibility Notes

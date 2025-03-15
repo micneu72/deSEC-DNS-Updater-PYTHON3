@@ -3,7 +3,7 @@
 ----------------------------------------------------------------------------
     Script Name:     desec.py
     CreationDate:    08.03.2025
-    Last Modified:   09.03.2025 12:30:50
+    Last Modified:   15.03.2025 11:08:00
     Copyright:       Michael N. (c)2025
     Purpose:         Aktualisiert DNS-Einträge bei desec.io mit Pushover-Benachrichtigungen
 ----------------------------------------------------------------------------
@@ -17,8 +17,30 @@ import argparse
 import re
 import subprocess
 import requests
+import logging
 from typing import Tuple, Dict, Optional, Any, List
 from datetime import datetime
+
+
+def setup_logging():
+    """Konfiguriert das Logging mit Zeitstempeln."""
+    logging.basicConfig(
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        level=logging.INFO
+    )
+    
+    # Umleiten von print-Ausgaben in das Logging-System
+    global original_print
+    global print
+    original_print = print
+    
+    def print_with_timestamp(*args, **kwargs):
+        message = " ".join(map(str, args))
+        logging.info(message)
+    
+    # print-Funktion ersetzen
+    print = print_with_timestamp
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -389,6 +411,12 @@ def get_current_ips(verbose: bool = False) -> Tuple[str, str]:
 
 def main() -> None:
     """Main function of the script."""
+    # Global-Deklarationen am Anfang der Funktion
+    global print
+    
+    # Logging mit Zeitstempeln einrichten
+    setup_logging()
+    
     start_time = time.time()
     
     # Kommandozeilenargumente parsen
@@ -414,7 +442,9 @@ def main() -> None:
     end_time = time.time()
     elapsed_time = int(end_time - start_time)
     print("\n" + format_runtime(elapsed_time))
-
+    
+    # Original print-Funktion wiederherstellen
+    print = original_print
 
 if __name__ == "__main__":
     main()
