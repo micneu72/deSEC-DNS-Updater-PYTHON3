@@ -111,7 +111,7 @@ For automated execution on macOS, you can use launchd:
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.user.desec-updater</string>
+    <string>com.micneu.desec-updater</string>
     <key>ProgramArguments</key>
     <array>
         <string>/path/to/your/desec</string>
