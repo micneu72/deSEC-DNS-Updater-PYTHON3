@@ -158,6 +158,14 @@ jobs:
         with:
           path: binaries
           
+      # HIER NEUEN SCHRITT EINFÜGEN
+      - name: Make binaries executable
+        run: |
+          # Finde alle Binärdateien (außer Windows .exe) und mache sie ausführbar
+          find binaries -type f -name "desec" -exec chmod +x {} \;
+          # Zeige die Berechtigungen an, um zu überprüfen
+          find binaries -type f -name "desec" -exec ls -la {} \;
+            
       - name: Create release ZIP
         run: |
           mkdir -p binaries
@@ -169,6 +177,7 @@ jobs:
             touch empty.txt
             zip -r ../desec-binaries.zip empty.txt
           fi
+
 
           
       - name: Upload combined artifact
