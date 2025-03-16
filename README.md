@@ -135,12 +135,7 @@ For automated execution on macOS, you can use launchd:
 
 For system-wide execution (LaunchDaemons):
 ```bash
-sudo launchctl bootstrap system /Library/LaunchDaemons/com.micneu.desec-updater.plist
-```
-
-For user-specific execution (LaunchAgents):
-```bash
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.micneu.desec-updater.plist
+sudo launchctl load -w /Library/LaunchDaemons/com.micneu.desec-updater.plist
 ```
 
 3. To check if it's running:
@@ -153,12 +148,7 @@ launchctl list | grep desec
 
 For system-wide execution:
 ```bash
-sudo launchctl bootout system /Library/LaunchDaemons/com.micneu.desec-updater.plist
-```
-
-For user-specific execution:
-```bash
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.micneu.desec-updater.plist
+sudo launchctl unload -w /Library/LaunchDaemons/com.micneu.desec-updater.plist
 ```
 
 ## Compatibility Notes
