@@ -124,9 +124,9 @@ For automated execution on macOS, you can use launchd:
     <key>RunAtLoad</key>
     <true/>
     <key>StandardErrorPath</key>
-    <string>/tmp/desec-updater.err</string>
+    <string>/var/log/desec-updater.log</string>
     <key>StandardOutPath</key>
-    <string>/tmp/desec-updater.out</string>
+    <string>/var/log/desec-updater.log</string>
 </dict>
 </plist>
 ```
@@ -135,6 +135,7 @@ For automated execution on macOS, you can use launchd:
 
 For system-wide execution (LaunchDaemons):
 ```bash
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.micneu.desec-updater.plist
 sudo launchctl load -w /Library/LaunchDaemons/com.micneu.desec-updater.plist
 ```
 
