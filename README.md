@@ -38,7 +38,8 @@ The script uses a JSON configuration file with the following structure:
         "user_key": "your_pushover_user_key",
         "app_token": "your_pushover_app_token"
     }
-}```
+}
+```
 
 If the configuration file doesn't exist, a template will be created automatically.
 
