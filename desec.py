@@ -3,7 +3,7 @@
 ----------------------------------------------------------------------------
     Script Name:     desec.py
     CreationDate:    08.03.2025
-    Last Modified:   15.03.2025 11:08:00
+    Last Modified:   24.04.2025 14:49:41
     Copyright:       Michael N. (c)2025
     Purpose:         Aktualisiert DNS-Einträge bei desec.io mit Pushover-Benachrichtigungen
 ----------------------------------------------------------------------------
@@ -57,7 +57,8 @@ def create_default_config(config_file: str) -> None:
     """Create a default configuration file if it doesn't exist."""
     default_config = {
         "token": "enter_your_desec_token_here",
-        "kodihost": "enter.your.domain.here",
+        "domain": "enter.your.domain.here",
+        "subname": "enter.your.subname.here",
         "pushover": {
             "enabled": False,
             "user_key": "your_pushover_user_key",
@@ -91,8 +92,12 @@ def load_config(config_file: str) -> Dict[str, Any]:
             print("Error: Token could not be read from the configuration file or has not been customized.")
             sys.exit(1)
             
-        if not config.get("kodihost") or config["kodihost"] == "enter.your.domain.here":
+        if not config.get("domain") or config["domain"] == "enter.your.domain.here":
             print("Error: Domain could not be read from the configuration file or has not been customized.")
+            sys.exit(1)
+
+        if not config.get("subname") or config["subname"] == "enter.your.subname.here":
+            print("Error: subname could not be read from the configuration file or has not been customized.")
             sys.exit(1)
             
         # Ensure Pushover configuration exists, even if not enabled
@@ -240,6 +245,31 @@ def hostname_to_ip(hostname: str, verbose: bool = False) -> Tuple[str, str]:
         return "", ""
 
 
+def get_dns_records(domain: str, subname: str, token: str) -> Tuple[List[str], List[str]]:
+    """Holt A/AAAA-Records mit Schleife für weniger Code-Duplikation."""
+    headers = {"Authorization": f"Token {token}"}
+    record_types = ["A", "AAAA"]
+    results = {"A": [], "AAAA": []}
+
+    for record_type in record_types:
+        try:
+            url = f"https://desec.io/api/v1/domains/{domain}/rrsets/{subname}/{record_type}/"
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 404:
+                continue  # Ignoriere nicht-existente Einträge
+                
+            response.raise_for_status()
+            results[record_type] = response.json().get("records", [])
+            
+        except requests.HTTPError as e:
+            print(f"Fehler bei {record_type}-Record: {e}")
+        except Exception as e:
+            print(f"Allgemeiner Fehler bei {record_type}-Record: {e}")
+
+    return results["A"][0], results["AAAA"][0]
+
+
 def format_runtime(elapsed_time: int) -> str:
     """
     Formats the given runtime (in seconds) dynamically.Args:
@@ -278,7 +308,9 @@ def update_dns(config: Dict[str, Any], ipv4: str, ipv6: str, current_ipv4: str, 
     Returns:
         bool: True wenn eine Aktualisierung durchgeführt wurde, sonst False
     """
-    kodihost = config["kodihost"]
+    kodihost = f"{config['subname']}.{config['domain']}"
+    domain = config["domain"]
+    subname = config["subname"]
     token = config["token"]
     
     # Leerzeichen entfernen
@@ -426,10 +458,12 @@ def main() -> None:
     config = load_config(args.config)
     
     # Hostname ausgeben
-    print(f"Hostname: {config['kodihost']}")
+    kodihost = f"{config['subname']}.{config['domain']}"
+    print(f"Hostname: {kodihost}")
     
     # Aktuelle IPs des Hostnamens abrufen
-    current_ipv4, current_ipv6 = hostname_to_ip(config['kodihost'], args.verbose)
+    #current_ipv4, current_ipv6 = hostname_to_ip(config['kodihost'], args.verbose)
+    current_ipv4, current_ipv6 = get_dns_records(config['domain'], config['subname'], config['token'])
     print(f"IP4={current_ipv4}, IP6={current_ipv6}")
     
     # Aktuelle öffentliche IPs abrufen
