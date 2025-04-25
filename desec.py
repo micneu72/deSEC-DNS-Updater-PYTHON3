@@ -301,7 +301,7 @@ def format_runtime(elapsed_time: int) -> str:
     return f"Runtime: {', '.join(parts)}"
 
 
-def update_dns(config: Dict[str, Any], ipv4: str, ipv6: str, current_ipv4: str, current_ipv6: str, verbose: bool = False) -> bool:
+def update_dns(config: Dict[str, Any], wanIPv4: str, wanIPv6: str, dnsIPv4: str, dnsIPv6: str, verbose: bool = False) -> bool:
     """
     Aktualisiert die DNS-Einträge bei desec.io, wenn sich die IPs geändert haben.
     
@@ -313,39 +313,33 @@ def update_dns(config: Dict[str, Any], ipv4: str, ipv6: str, current_ipv4: str, 
     subname = config["subname"]
     token = config["token"]
     
-    # Leerzeichen entfernen
-    ipv4 = ipv4.strip() if ipv4 else ""
-    ipv6 = ipv6.strip() if ipv6 else ""
-    current_ipv4 = current_ipv4.strip() if current_ipv4 else ""
-    current_ipv6 = current_ipv6.strip() if current_ipv6 else ""
-    
     # Prüfen, ob sich die IPs geändert haben
-    ip_changed = current_ipv4 != ipv4 or current_ipv6 != ipv6
+    ip_changed = wanIPv4 != dnsIPv4 or wanIPv6 != dnsIPv6
     
     if ip_changed:
         print("The IPs have changed or one of them. Starting processing.")
         
         # Nachricht für Pushover vorbereiten
         change_details = []
-        if current_ipv4 != ipv4:
-            change_details.append(f"IPv4: {current_ipv4} → {ipv4}")
-        if current_ipv6 != ipv6:
-            change_details.append(f"IPv6: {current_ipv6} → {ipv6}")
+        if wanIPv4 != dnsIPv4:
+            change_details.append(f"IPv4: {dnsIPv4} → {wanIPv4}")
+        if wanIPv6 != dnsIPv6:
+            change_details.append(f"IPv6: {dnsIPv6} → {wanIPv6}")
         
         change_message = "\n".join(change_details)
         
         url = "https://update.dedyn.io/"
         headers = {"Authorization": f"Token {token}"}
         
-        if ipv4 and ipv6:
-            print(f"Both IPs are available: IPv4 = '{ipv4}', IPv6 = '{ipv6}'")
-            params = {"hostname": kodihost, "myipv4": ipv4, "myipv6": ipv6}
-        elif ipv4:
-            print(f"Only IPv4 is available: IPv4 = '{ipv4}'")
-            params = {"hostname": kodihost, "myipv4": ipv4, "myipv6": "no"}
-        elif ipv6:
-            print(f"Only IPv6 is available: IPv6 = '{ipv6}'")
-            params = {"hostname": kodihost, "myipv4": "no", "myipv6": ipv6}
+        if wanIPv4 and wanIPv6:
+            print(f"Both IPs are available: WAN IPv4 = '{wanIPv4}', WAN IPv6 = '{wanIPv6}'")
+            params = {"hostname": kodihost, "myipv4": wanIPv4, "myipv6": wanIPv6}
+        elif wanIPv4:
+            print(f"Only IPv4 is available: IPv4 = '{wanIPv4}'")
+            params = {"hostname": kodihost, "myipv4": wanIPv4, "myipv6": "no"}
+        elif wanIPv6:
+            print(f"Only IPv6 is available: IPv6 = '{wanIPv6}'")
+            params = {"hostname": kodihost, "myipv4": "no", "myipv6": wanIPv6}
         else:
             print("None of the IPs are available")
             return False
@@ -386,60 +380,33 @@ def update_dns(config: Dict[str, Any], ipv4: str, ipv6: str, current_ipv4: str, 
 
 
 def get_current_ips(verbose: bool = False) -> Tuple[str, str]:
-    """
-    Ermittelt die aktuellen öffentlichen IP-Adressen.
-    
-    Returns:
-        Tuple[str, str]: (ipv4, ipv6)
-    """
-    ipv4 = ""
-    ipv6 = ""
-    
-    # Liste der IP-Dienste, die wir versuchen können
-    ip_services = [
-        {"url": "https://ip.micneu.de", "ipv4_params": {}, "ipv6_params": {"ipv6": "true"}},
-        {"url": "https://api.ipify.org", "ipv4_params": {}, "ipv6_params": {}},
-        {"url": "https://ifconfig.me/ip", "ipv4_params": {}, "ipv6_params": {}}
+    """Ermittelt öffentliche IPs mit verbesserter Fehlerbehandlung"""
+    services = [
+        {
+            "name": "Amazon AWS",
+            "ipv4": "https://checkip.amazonaws.com",
+            "ipv6": "https://checkipv6.amazonaws.com"
+        },
+        {
+            "name": "icanhazip",
+            "ipv4": "https://ipv4.icanhazip.com",
+            "ipv6": "https://ipv6.icanhazip.com"
+        }
     ]
     
-    # IPv4 abrufen
-    for service in ip_services:
+    def fetch_ip(url: str) -> str:
         try:
-            if verbose:
-                print(f"Attempting to retrieve IPv4 address from {service['url']}...")
-                
-            response = requests.get(service["url"], params=service["ipv4_params"], timeout=5)
-            if response.status_code == 200:
-                potential_ipv4 = response.text.strip()
-                is_valid, ip_type = check_ip_address(potential_ipv4)
-                if is_valid and "IPv4" in ip_type:
-                    ipv4 = potential_ipv4
-                    print(ip_type)
-                    break
-        except Exception as e:
-            if verbose:
-                print(f"Error retrieving IPv4 address from {service['url']}: {e}")
-    
-    # IPv6 abrufen
-    for service in ip_services:
-        try:
-            if verbose:
-                print(f"Attempting to retrieve IPv6 address from {service['url']}...")
-                
-            # Für IPv6 spezifische Parameter verwenden
-            response = requests.get(service["url"], params=service["ipv6_params"], timeout=5)
-            if response.status_code == 200:
-                potential_ipv6 = response.text.strip()
-                is_valid, ip_type = check_ip_address(potential_ipv6)
-                if is_valid and "IPv6" in ip_type:
-                    ipv6 = potential_ipv6
-                    print(ip_type)
-                    break
-        except Exception as e:
-            if verbose:
-                print(f"Error retrieving IPv6 address from {service['url']}: {e}")
-    
-    return ipv4, ipv6
+            response = requests.get(url, timeout=3)
+            return response.text.strip() if response.status_code == 200 else ""
+        except:
+            return ""
+
+    return (
+        next((ip for s in services if (ip := fetch_ip(s["ipv4"]))), ""),
+        next((ip for s in services if (ip := fetch_ip(s["ipv6"]))), "")
+    )
+
+
 
 def main() -> None:
     """Main function of the script."""
@@ -462,15 +429,15 @@ def main() -> None:
     print(f"Hostname: {kodihost}")
     
     # Aktuelle IPs des Hostnamens abrufen
-    #current_ipv4, current_ipv6 = hostname_to_ip(config['kodihost'], args.verbose)
-    current_ipv4, current_ipv6 = get_dns_records(config['domain'], config['subname'], config['token'])
-    print(f"IP4={current_ipv4}, IP6={current_ipv6}")
+    dnsIPv4, dnsIPv6 = get_dns_records(config['domain'], config['subname'], config['token'])
+    print(f"dnsIPv4: {dnsIPv4}, dnsIPv6: {dnsIPv6}")
     
     # Aktuelle öffentliche IPs abrufen
-    ipv4, ipv6 = get_current_ips(args.verbose)
-    
+    wanIPv4, wanIPv6 = get_current_ips(args.verbose)
+    print(f"wanIPv4: {wanIPv4}, wanIPv6: {wanIPv6}")
+
     # DNS-Einträge aktualisieren, wenn nötig
-    update_dns(config, ipv4, ipv6, current_ipv4, current_ipv6, args.verbose)
+    update_dns(config, wanIPv4, wanIPv6, dnsIPv4, dnsIPv6, args.verbose)
     
     # Laufzeit ausgeben
     end_time = time.time()
